@@ -4,3 +4,4 @@ dist
 .tern-port
 .idea
 database.sqlite3
+/.vscode/

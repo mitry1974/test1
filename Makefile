@@ -1,6 +1,5 @@
-install: 
-	install-deps
-	db-setup
+
+install:install-deps db-setup
 
 run:
 	npx babel-node 'src/index.js'
