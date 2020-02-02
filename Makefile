@@ -1,10 +1,20 @@
-install: install-deps
+install: 
+	install-deps
+	db-setup
 
 run:
-	npx babel-node 'src/bin/hexlet.js' 10
+	npx babel-node 'src/index.js'
 
 install-deps:
 	npm install
+
+db-setup:
+	npx sequelize db:migrate
+	npx sequelize-cli db:seed:all
+
+db-clear:
+	npx sequelize-cli db:seed:undo
+	npx sequelize-cli db:migrate:undo
 
 build:
 	rm -rf dist
@@ -18,5 +28,3 @@ lint:
 
 publish:
 	npm publish
-
-.PHONY: test
