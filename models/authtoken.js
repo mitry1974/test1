@@ -1,29 +1,34 @@
-'use strict';
+
+import * as jwt from 'jsonwebtoken';
+import crypto from 'crypto';
+
 module.exports = (sequelize, DataTypes) => {
   const AuthToken = sequelize.define('AuthToken', {
-    token: DataTypes.STRING
-  }, {});
-  AuthToken.associate = function (models) {
+    token: DataTypes.STRING,
+  }, {
+    timestamps: false,
+  });
+
+  AuthToken.associate = function associate({ User }) {
     AuthToken.belongsTo(User);
   };
-  AuthToken.generate = async function (UserId) {
-    if (!UserId) {
-      throw new Error('AuthToken requires a user ID')
+
+  AuthToken.generate = async function generate(user) {
+    if (!user) {
+      throw new Error('AuthToken requires a user ID');
     }
 
-    let token = '';
+    const buf = crypto.randomBytes(256);
+    const payload = {
+      firstname: user.firstname,
+      lastname: user.lastname,
+      email: user.email,
+      username: user.username,
+    };
 
-    const possibleCharacters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' +
-      'abcdefghijklmnopqrstuvwxyz0123456789';
-
-    for (var i = 0; i < 15; i++) {
-      token += possibleCharacters.charAt(
-        Math.floor(Math.random() * possibleCharacters.length)
-      );
-    }
-
-    return AuthToken.create({ token, UserId })
-  }
+    const token = jwt.sign(payload, buf);
+    return AuthToken.create({ token, UserId: user.id });
+  };
 
   return AuthToken;
 };
