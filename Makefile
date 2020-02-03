@@ -2,7 +2,7 @@
 install:install-deps db-setup
 
 run:
-	npx babel-node 'src/index.js'
+	npx babel-node 'src/main.js'
 
 install-deps:
 	npm install

@@ -1,8 +1,17 @@
 'use strict';
 
 import bcrypt from 'bcrypt';
-import comparePassword from '../utils/authUtils';
 
+const encryptPassword = (user) => {
+  const salt = bcrypt.genSaltSync();
+  user.password = bcrypt.hashSync(user.password, salt);
+};
+
+const encryptPasswordIfChanged = (user, options) => {
+  if (user.changed('password')) {
+    encryptPassword(user.get('password'));
+  }
+}
 module.exports = (sequelize, DataTypes) => {
   const User = sequelize.define('User', {
     firstName: DataTypes.STRING,
@@ -13,10 +22,8 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     timestamps: false,
     hooks: {
-      beforeCreate: (user) => {
-        const salt = bcrypt.genSaltSync();
-        user.password = bcrypt.hashSync(user.password, salt);
-      }
+      beforeCreate: encryptPasswordIfChanged,
+      beforeUpdate: encryptPasswordIfChanged,
     },
     instanceMethods: {
       validPassword: function (password) {
@@ -36,7 +43,7 @@ module.exports = (sequelize, DataTypes) => {
       throw new Error('user not found');
     }
 
-    if (!comparePassword(user, password)) {
+    if (!this.validPasswordpassword) {
       throw new Error('invalid password');
     }
     return user;

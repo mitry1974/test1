@@ -1,6 +1,5 @@
 import express from 'express';
-import { User } from '../models';
-import comparePassword from '../utils/authUtils';
+import { User } from '../db/models';
 
 const router = express.Router();
 
@@ -74,7 +73,7 @@ router.post('/change_password', (req, res) => {
   }
 
   if (req.user) {
-    if (!comparePassword(req.user, newPassword)) {
+    if (!req.user.validPassword(oldPassword)) {
       res.status(400).send(makeErrorResponse('Old password incorrect'));
       return;
     }
