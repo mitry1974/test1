@@ -5,3 +5,4 @@ dist
 .idea
 database.sqlite3
 /.vscode/
+:memory

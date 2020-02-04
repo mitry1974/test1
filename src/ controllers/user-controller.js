@@ -1,4 +1,5 @@
 import express from 'express';
+import validatePassword from '../utils/authutils';
 import { User } from '../db/models';
 
 const router = express.Router();
@@ -33,7 +34,6 @@ router.post('/registration', async (req, res) => {
       return;
     }
 
-    //    const existingUser = User.findOne({username: userData.username});
     const existingUser = await User.findOne(
       {
         where: { username: userData.username }
@@ -88,21 +88,28 @@ router.get('/user', (req, res) => {
 router.post('/change_password', (req, res) => {
   const { oldPassword, newPassword } = req.body;
   if (!oldPassword || !newPassword) {
+    console.log('error, null password');
     res.status(400).send(makeErrorResponse('Both passwords shouldn\'t be empty'));
   }
 
   if (oldPassword === newPassword) {
+    console.log('error, old password and new password the same');
     res.status(400).send(makeErrorResponse('Passwords can\'t be the same'));
     return;
   }
 
   if (req.user) {
-    if (!req.user.validPassword(oldPassword)) {
+    console.log('user logged in');
+    console.log('validate password = ', validatePassword);
+    if (!validatePassword(req.user, oldPassword)) {
+      console.log('error, password not validated');
       res.status(400).send(makeErrorResponse('Old password incorrect'));
       return;
     }
 
+    console.log('password validated');
     req.user.update({ password: newPassword });
+    console.log('password updated');
   } else {
     res.send.makeErrorResponse('User isn\'t autorized');
     return;

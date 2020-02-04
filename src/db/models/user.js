@@ -1,21 +1,5 @@
 'use strict';
-
-import bcrypt from 'bcrypt';
-
-const encryptPassword = (password) => {
-  const salt = bcrypt.genSaltSync();
-  return bcrypt.hashSync(password, salt);
-};
-
-const encryptPasswordIfChanged = (user, options) => {
-  if (user.changed('password')) {
-    user.password = encryptPassword(user.get('password'));
-  }
-}
-
-const validPassword = (user, password) => {
-  return bcrypt.compareSync(password, user.password);
-};
+import { validatePassword, encryptPasswordIfChanged } from '../../utils/authutils';
 
 module.exports = (sequelize, DataTypes) => {
   const User = sequelize.define('User', {
@@ -45,7 +29,7 @@ User.authenticate = async function (username, password) {
     throw new Error('user not found');
   }
 
-  if (!validPassword(user, password)) {
+  if (!validatePassword(user, password)) {
     throw new Error('invalid password');
   }
   return user;
@@ -60,7 +44,6 @@ User.prototype.authorize = async function () {
 
   return authToken;
 };
-
 
 User.prototype.logout = async function (token) {
   sequelize.models.AuthToken.destroy({ where: { token } });
