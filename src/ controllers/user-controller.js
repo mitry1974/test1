@@ -17,17 +17,42 @@ const makeGoodResponse = (data) => ({
 
 router.post('/registration', async (req, res) => {
   try {
+    const userData = req.body;
+    if (!userData.password || userData.password === '') {
+      res.status(422).send(makeErrorResponse('Password missed or blanc'));
+      return;
+    }
+
+    if (!userData.email || userData.email === '') {
+      res.status(422).send(makeErrorResponse('Email missed or blanc'));
+      return;
+    }
+
+    if (!userData.username || userData.username === '') {
+      res.status(422).send(makeErrorResponse('Username missed or blanc'));
+      return;
+    }
+
+    //    const existingUser = User.findOne({username: userData.username});
+    const existingUser = await User.findOne(
+      {
+        where: { username: userData.username }
+      });
+    if (existingUser) {
+      console.log(existingUser);
+      res.status(422).send(makeErrorResponse('User with that username already registered'));
+      return;
+    }
+
     const user = await User.create(req.body);
+    //    console.log(user);
     const authData = await user.authorize();
 
-    return res.json({
-      ok: true,
-      message: '',
-      data: authData.token,
-    });
+    res.status(201).send(makeGoodResponse(authData.token));
+    return;
   } catch (err) {
-    console.log(err);
-    return res.status(400).send(makeErrorResponse(err.errors[0].message));
+    console.log('------------------error', err);
+    return res.status(400).send(makeErrorResponse(err));
   }
 });
 
@@ -36,7 +61,7 @@ router.post('/auth', async (req, res) => {
   console.log('username = ', username, 'password = ', password);
 
   if (!username || !password) {
-    return res.status(400).send(makeErrorResponse('Request missing username or password param'));
+    return res.status(401).send(makeErrorResponse('Request missing username or password param'));
   }
 
   try {
@@ -47,7 +72,7 @@ router.post('/auth', async (req, res) => {
     return res.json(makeGoodResponse(authToken.token));
   } catch (err) {
     console.log(err);
-    return res.status(400).send(makeErrorResponse('invalid username or password'));
+    return res.status(401).send(makeErrorResponse('User unauthorized'));
   }
 });
 
@@ -62,7 +87,6 @@ router.get('/user', (req, res) => {
 
 router.post('/change_password', (req, res) => {
   const { oldPassword, newPassword } = req.body;
-  console.log('Old password = ', oldPassword, 'New password = ', newPassword);
   if (!oldPassword || !newPassword) {
     res.status(400).send(makeErrorResponse('Both passwords shouldn\'t be empty'));
   }

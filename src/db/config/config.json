@@ -4,6 +4,7 @@
     "storage": "./database.sqlite3"
   },
   "test": {
+    "database_url": "sqlite://:memory:",
     "dialect": "sqlite",
     "storage": ":memory"
   },

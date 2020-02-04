@@ -2,16 +2,21 @@
 
 import bcrypt from 'bcrypt';
 
-const encryptPassword = (user) => {
+const encryptPassword = (password) => {
   const salt = bcrypt.genSaltSync();
-  user.password = bcrypt.hashSync(user.password, salt);
+  return bcrypt.hashSync(password, salt);
 };
 
 const encryptPasswordIfChanged = (user, options) => {
   if (user.changed('password')) {
-    encryptPassword(user.get('password'));
+    user.password = encryptPassword(user.get('password'));
   }
 }
+
+const validPassword = (user, password) => {
+  return bcrypt.compareSync(password, user.password);
+};
+
 module.exports = (sequelize, DataTypes) => {
   const User = sequelize.define('User', {
     firstName: DataTypes.STRING,
@@ -25,45 +30,42 @@ module.exports = (sequelize, DataTypes) => {
       beforeCreate: encryptPasswordIfChanged,
       beforeUpdate: encryptPasswordIfChanged,
     },
-    instanceMethods: {
-      validPassword: function (password) {
-        return bcrypt.compareSync(password, this.password);
-      }
-    }
-  });
-  
-  User.associate = function (models) {
-    User.hasMany(models.AuthToken);
-  };
+    instanceMethods: {}
+  }
+  )
 
-  User.authenticate = async function (username, password) {
+User.associate = function (models) {
+  User.hasMany(models.AuthToken);
+};
 
-    const user = await User.findOne({ where: { username } });
-    if (!user) {
-      throw new Error('user not found');
-    }
+User.authenticate = async function (username, password) {
 
-    if (!this.validPasswordpassword) {
-      throw new Error('invalid password');
-    }
-    return user;
+  const user = await User.findOne({ where: { username } });
+  if (!user) {
+    throw new Error('user not found');
   }
 
-  User.prototype.authorize = async function () {
-    const { AuthToken } = sequelize.models;
-    const user = this
-    const authToken = await AuthToken.generate(this);
+  if (!validPassword(user, password)) {
+    throw new Error('invalid password');
+  }
+  return user;
+}
 
-    await user.addAuthToken(authToken);
+User.prototype.authorize = async function () {
+  const { AuthToken } = sequelize.models;
+  const user = this
+  const authToken = await AuthToken.generate(this);
 
-    return authToken;
-  };
+  await user.addAuthToken(authToken);
+
+  return authToken;
+};
 
 
-  User.prototype.logout = async function (token) {
-    sequelize.models.AuthToken.destroy({ where: { token } });
-  };
+User.prototype.logout = async function (token) {
+  sequelize.models.AuthToken.destroy({ where: { token } });
+};
 
-  return User;
+return User;
 };
 
