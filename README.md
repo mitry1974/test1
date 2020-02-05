@@ -1,7 +1,6 @@
 ##
 Test project. 
 Authorization REST interface
-
 ##
 
 # nodejs-package
@@ -10,12 +9,16 @@ Authorization REST interface
 
 ## Setup
 
-```sh
 $ make install
-```
 
 ## Run tests
 
 ```sh
 $ make test
+```
+## Run tests
+
+## Run local
+```sh
+$ make run
 ```
