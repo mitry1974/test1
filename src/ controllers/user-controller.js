@@ -2,7 +2,7 @@ import express from 'express';
 import { validatePassword } from '../utils/authutils';
 import { User } from '../db/models';
 import maskEmail from '../utils/emailutils';
-import validateEmail from 'email-validator';
+import validator from 'node-email-validation';
 const router = express.Router();
 
 const makeErrorResponse = (message) => ({
@@ -20,7 +20,6 @@ const makeGoodResponse = (data) => ({
 router.post('/registration', async (req, res) => {
   try {
     const userData = req.body;
-    console.log('=================================================', req.body);
     
     if (!userData.password || userData.password === '') {
       res.status(422).send(makeErrorResponse('Password missed or blanc'));
@@ -37,7 +36,7 @@ router.post('/registration', async (req, res) => {
       return;
     }
 
-    if(!validateEmail(userData.email)) {
+    if(!validator.is_email_valid(userData.email)) {
       res.status(422).send(makeErrorResponse('Invalid email'));
       return;
     }

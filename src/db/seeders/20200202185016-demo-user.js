@@ -8,7 +8,7 @@ module.exports = {
     password: '12345',
   }, {
     firstname: 'Scooby',
-    lastmame: 'Doo',
+    lastname: 'Doo',
     email: 'user2@testfakedomain.com',
     username: 'user2',
     password: '12345',

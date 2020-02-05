@@ -47,7 +47,6 @@ describe('Testing /registration', () => {
     const response = await request(app)
       .post('/registration')
       .send(userData);
-    console.log(response.body);
     expect(response.statusCode).toBe(201); // created
   });
 
