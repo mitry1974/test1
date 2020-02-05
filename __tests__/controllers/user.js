@@ -152,10 +152,11 @@ describe('Testing /change_password', () => {
         await request(app)
             .post('/registration')
             .send(userData);
+
         const response = await request(app)
             .post('/auth')
             .send(user1authData);
-        expect(response.statusCode).toBe(200);    
+        expect(response.statusCode).toBe(200);
         expect(response.body.token !== '');
         token = response.body.data;
     });
@@ -168,8 +169,55 @@ describe('Testing /change_password', () => {
                 oldPassword: 'password',
                 newPassword: 'new_password',
             });
-            expect(chPasswordResponse.statusCode).toBe(200);
-            expect(chPasswordResponse.body.message).toBe('Password changed');
+        expect(chPasswordResponse.statusCode).toBe(200);
+        expect(chPasswordResponse.body.data).toBe('Password changed');
+    });
+
+    it('Test /change_password wrong old password', async () => {
+        const chPasswordResponse = await request(app)
+            .post('/change_password')
+            .set('authorization', 'Bearer ' + token)
+            .send({
+                oldPassword: 'kjkkjkj',
+                newPassword: 'new_password',
+            });
+        expect(chPasswordResponse.statusCode).toBe(400);
+        expect(chPasswordResponse.body.message).toBe('Old password incorrect');
+    });
+
+    it('Test /change_password missed token', async () => {
+        const chPasswordResponse = await request(app)
+            .post('/change_password')
+            .send({
+                oldPassword: 'password',
+                newPassword: 'new_password',
+            });
+        expect(chPasswordResponse.statusCode).toBe(400);
+        expect(chPasswordResponse.body.message).toBe('User should be autorized');
+    });
+
+    it('Test /change_password missed new password', async () => {
+        const chPasswordResponse = await request(app)
+            .post('/change_password')
+            .set('authorization', 'Bearer ' + token)
+            .send({
+                oldPassword: 'password',
+                newPassword: '',
+            });
+        expect(chPasswordResponse.statusCode).toBe(400);
+        expect(chPasswordResponse.body.message).toBe('Both passwords shouldn\'t be empty');
+    });
+
+    it('Test /change_password with new password the same as old password', async () => {
+        const chPasswordResponse = await request(app)
+            .post('/change_password')
+            .set('authorization', 'Bearer ' + token)
+            .send({
+                oldPassword: 'password',
+                newPassword: 'password',
+            });
+        expect(chPasswordResponse.statusCode).toBe(400);
+        expect(chPasswordResponse.body.message).toBe('Passwords can\'t be the same');
     });
 
     afterAll(() => {
@@ -182,10 +230,34 @@ describe('Testing /user', () => {
     beforeAll(async () => {
         app = express();
         await init(app);
+
         const userData = objectClone(user1RegData);
         const regResponse = await request(app)
             .post('/registration')
             .send(userData);
+
+        const response = await request(app)
+            .post('/auth')
+            .send(user1authData);
+
+        expect(response.statusCode).toBe(200);
+        expect(response.body.token !== '');
+        token = response.body.data;
+    });
+
+    if('Test /user logged in with proper username', async () => {
+        const response = await request(app)
+            .post('/user')
+            .set('authorization', 'Bearer ' + token)
+            .send({
+                username: user1RegData.username
+            });
+        expect(response.statusCode).toBe(200);
+        expect(chPasswordResponse.body.message.username).toBe(user1RegData.username);
+        expect(chPasswordResponse.body.message.email).toBe(user1RegData.email);
+        expect(chPasswordResponse.body.message.firstname).toBe(user1RegData.firstname);
+        expect(chPasswordResponse.body.message.lastname).toBe(user1RegData.lastname);
+
     });
 
     afterAll(() => {

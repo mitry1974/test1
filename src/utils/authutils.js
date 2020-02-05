@@ -12,9 +12,7 @@ const encryptPasswordIfChanged = (user, options) => {
 }
 
 const validatePassword = (user, password) => {
-  console.log('validate password, user.password = ', user.password, 'new password = ', password);
   const res = bcrypt.compareSync(password, user.password);
-  console.log('validate password, res = ', res);
   return res;
 };
 
