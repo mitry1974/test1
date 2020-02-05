@@ -1,7 +1,8 @@
 import express from 'express';
 import { validatePassword } from '../utils/authutils';
 import { User } from '../db/models';
-
+import maskEmail from '../utils/emailutils';
+import validateEmail from 'email-validator';
 const router = express.Router();
 
 const makeErrorResponse = (message) => ({
@@ -19,6 +20,8 @@ const makeGoodResponse = (data) => ({
 router.post('/registration', async (req, res) => {
   try {
     const userData = req.body;
+    console.log('=================================================', req.body);
+    
     if (!userData.password || userData.password === '') {
       res.status(422).send(makeErrorResponse('Password missed or blanc'));
       return;
@@ -31,6 +34,11 @@ router.post('/registration', async (req, res) => {
 
     if (!userData.username || userData.username === '') {
       res.status(422).send(makeErrorResponse('Username missed or blanc'));
+      return;
+    }
+
+    if(!validateEmail(userData.email)) {
+      res.status(422).send(makeErrorResponse('Invalid email'));
       return;
     }
 
@@ -98,32 +106,44 @@ router.post('/change_password', async (req, res) => {
 });
 
 router.get('/user', async (req, res) => {
-  const username = req.body.username;
-  let userData = {};
-  let user = null;
-  const isForeignUser = false;
-  
-  if (req.user && username === req.username) {
-    user = req.user;
-    isForeignUser = true;
-  } else {
-    user = await User.findOne(
-      {
-        where: { username: userData.username }
-      });
+  const username = req.query.username;
+
+  if (!username) {
+    res.status(400).send(makeErrorResponse('Username can\'t be empty'));
+    return;
   }
 
-  if(!user) {
+  let userData = {};
+  let user = null;
+  let isForeignUser = true;
+
+  if (req.user && username === req.user.username) {
+    isForeignUser = false;
+  }
+
+  try {
+    user = await User.findOne(
+      {
+        where: { username: username }
+      }
+    );
+  } catch (err) {
     res.status(404).send(makeErrorResponse('User not found'));
     return;
   }
 
-  userData = {
-    login: user.login,
-    firstname: user.firstname,
-    lastname: user.lastname,
-    email: user.email
-  };
+  if (!user) {
+    res.status(404).send(makeErrorResponse('User not found'));
+    return;
+  }
+  const email = isForeignUser ? maskEmail(user.email) : user.email;
+
+    userData = {
+      username: user.username,
+      firstname: user.firstname,
+      lastname: user.lastname,
+      email
+    };
 
   res.status(200).send(makeGoodResponse(userData));
 });
